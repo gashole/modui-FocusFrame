@@ -6,9 +6,10 @@
     local _, class          = UnitClass'player'
     local orig              = {}
 
-    orig.FocusFrame_CheckFaction    = FocusFrame_CheckFaction
-    orig.FocusFrame_HealthUpdate    = FocusFrame_HealthUpdate
-    orig.FocusDebuffButton_Update   = FocusDebuffButton_Update
+    orig.FocusFrame_CheckClassification = FocusFrame_CheckClassification
+    orig.FocusFrame_CheckFaction        = FocusFrame_CheckFaction
+    orig.FocusFrame_HealthUpdate        = FocusFrame_HealthUpdate
+    orig.FocusDebuffButton_Update       = FocusDebuffButton_Update
 
     table.insert(MODUI_COLOURELEMENTS_FOR_UI, FocusFrameTexture)
 
@@ -37,6 +38,20 @@
     FocusPVPIcon:ClearAllPoints()
     FocusPVPIcon:SetPoint('CENTER', FocusFrame, 'RIGHT', -42, 16)
     FocusPVPIcon:SetDrawLayer('OVERLAY', 7)
+
+    FocusFrame.Elite = FocusFrameTextureFrame:CreateTexture(nil, 'BORDER')
+    FocusFrame.Elite:SetTexture[[Interface\AddOns\modui\unitframe\UI-TargetingFrame-Elite]]
+    FocusFrame.Elite:SetWidth(128)
+    FocusFrame.Elite:SetHeight(128)
+    FocusFrame.Elite:SetPoint('TOPRIGHT', FocusFrame)
+    FocusFrame.Elite:Hide()
+
+    FocusFrame.Rare = FocusFrameTextureFrame:CreateTexture(nil, 'BORDER')
+    FocusFrame.Rare:SetTexture[[Interface\AddOns\modui\unitframe\UI-TargetingFrame-Rare-Elite]]
+    FocusFrame.Rare:SetWidth(128)
+    FocusFrame.Rare:SetHeight(128)
+    FocusFrame.Rare:SetPoint('TOPRIGHT', FocusFrame)
+    FocusFrame.Rare:Hide()
 
     FocusFrame.cast:SetStatusBarTexture(TEXTURE)
     FocusFrame.cast:SetStatusBarColor(1, .4, 0)
@@ -138,6 +153,20 @@
             end
         else
             FocusFrameManaBarText:SetTextColor(1, 1, 1)
+        end
+    end
+
+    function FocusFrame_CheckClassification(unit)
+        orig.FocusFrame_CheckClassification(unit)
+        local c = UnitClassification(unit)
+        FocusFrameTexture:SetTexture[[Interface\TargetingFrame\UI-TargetingFrame]]
+        for _, v in pairs({FocusFrame.Elite, FocusFrame.Rare}) do
+            v:Hide()
+        end
+        if  c == 'worldboss' or c == 'rareelite' or c == 'elite' then
+            FocusFrame.Elite:Show()
+        elseif c == 'rare' then
+            FocusFrame.Rare:Show()
         end
     end
 
