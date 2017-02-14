@@ -33,7 +33,8 @@
     FocusLevelText:SetJustifyH'LEFT'
     FocusLevelText:SetPoint('LEFT', FocusFrameTextureFrame, 'CENTER', 56, -16)
 
-    FocusPVPIcon:SetWidth(48) FocusPVPIcon:SetHeight(48) 
+    FocusPVPIcon:SetWidth(48) FocusPVPIcon:SetHeight(48)
+    FocusPVPIcon:ClearAllPoints()
     FocusPVPIcon:SetPoint('CENTER', FocusFrame, 'RIGHT', -42, 16)
     FocusPVPIcon:SetDrawLayer('OVERLAY', 7)
 
