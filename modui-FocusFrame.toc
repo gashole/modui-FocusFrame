@@ -1,0 +1,5 @@
+## Interface: 11200
+## Title: modui-FocusFrame
+## Notes: Adds modui style changes to FocusFrame.
+## RequiredDeps: modui, FocusFrame
+core.lua
