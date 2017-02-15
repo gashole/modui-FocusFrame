@@ -29,7 +29,6 @@
     FocusDeadText:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
     FocusDeadText:SetShadowOffset(0, 0)
     FocusDeadText:SetTextColor(1, 0, 0)
-    FocusDeadText:SetPoint('CENTER', FocusFrameHealthBar, 0, 0)
 
     FocusLevelText:SetJustifyH'LEFT'
     FocusLevelText:SetPoint('LEFT', FocusFrameTextureFrame, 'CENTER', 56, -16)
@@ -103,24 +102,31 @@
     end
 
     local gradient = function(v, f, min, max)
-        if _G['modui_vars'].db['modWhiteStatusText'] == 0 then
-            if v < min or v > max then return end
-            if (max - min) > 0 then
-                v = (v - min)/(max - min)
-            else
-                v = 0
-            end
-            if v > .5 then
-                r = (1 - v)*2
-                g = 1
-            else
-                r = 1
-                g = v*2
-            end
-            b = 0
-            f:SetTextColor(r*1.5, g*1.5, b*1.5)
+        if v < min or v > max then return end
+        if (max - min) > 0 then
+            v = (v - min)/(max - min)
         else
-            f:SetTextColor(1, 1, 1)
+            v = 0
+        end
+        if v > .5 then
+            r = (1 - v)*2
+            g = 1
+        else
+            r = 1
+            g = v*2
+        end
+        b = 0
+        if  f:GetObjectType() == 'StatusBar'  then
+            f:SetStatusBarColor(r, g, b)
+        elseif
+            f:GetObjectType() == 'FontString' then
+            if  _G['modui_vars'].db and _G['modui_vars'].db['modWhiteStatusText'] == 0 then
+                f:SetTextColor(r*1.5, g*1.5, b*1.5)
+            else
+                f:SetTextColor(1, 1, 1)
+            end
+        else
+            f:SetVertexColor(r, g, b)
         end
     end
 
@@ -132,6 +138,7 @@
         end
 
         gradient(v or 100, FocusFrameHealthBarText, 0, max or 100)
+        gradient(v or 100, FocusFrameHealthBar, 0, max or 100)
     end
 
     local powerUpdate = function(unit, data)
