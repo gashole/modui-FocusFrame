@@ -1,4 +1,4 @@
-![modui-FocusFrame](http://i.imgur.com/WQsoHqh.png)
+![modui-FocusFrame](http://i.imgur.com/USsm9eF.png)
 
 # modui-FocusFrame
 
