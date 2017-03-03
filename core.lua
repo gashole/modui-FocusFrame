@@ -1,15 +1,10 @@
 
 
+    local Focus             = _G['FocusData']
     local TEXTURE           = [[Interface\AddOns\modui\statusbar\texture\sb.tga]]
     local NAME_TEXTURE      = [[Interface\AddOns\modui\statusbar\texture\name2.tga]]
     local BACKDROP          = {bgFile = [[Interface\Tooltips\UI-Tooltip-Background]]}
-    local _, class          = UnitClass'player'
-    local orig              = {}
-
-    orig.FocusFrame_CheckClassification = FocusFrame_CheckClassification
-    orig.FocusFrame_CheckFaction        = FocusFrame_CheckFaction
-    orig.FocusFrame_HealthUpdate        = FocusFrame_HealthUpdate
-    orig.FocusDebuffButton_Update       = FocusDebuffButton_Update
+    local unit, class
 
     table.insert(MODUI_COLOURELEMENTS_FOR_UI, FocusFrameTexture)
 
@@ -19,12 +14,10 @@
     FocusFrameHealthBar:SetBackdrop(BACKDROP)
     FocusFrameHealthBar:SetBackdropColor(0, 0, 0, .6)
     FocusFrameHealthBar:SetStatusBarTexture(TEXTURE)
-    FocusFrameHealthBar.textLockable = 1
 
     FocusFrameManaBar:SetBackdrop(BACKDROP)
     FocusFrameManaBar:SetBackdropColor(0, 0, 0, .6)
     FocusFrameManaBar:SetStatusBarTexture(TEXTURE)
-    FocusFrameManaBar.textLockable = 1
 
     FocusDeadText:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
     FocusDeadText:SetShadowOffset(0, 0)
@@ -130,42 +123,17 @@
         end
     end
 
-    local healthUpdate = function(unit, data)
-        local v, max    = data.health, data.maxHealth
-
-        if v == 0 or max == 0 then
-            return FocusFrameHealthBarText:SetText''
-        end
-
-        gradient(v or 100, FocusFrameHealthBarText, 0, max or 100)
-        gradient(v or 100, FocusFrameHealthBar, 0, max or 100)
-    end
-
-    local powerUpdate = function(unit, data)
-        local v, max    = data.mana, data.maxMana
-        local pt        = data.power
-        local npc       = data.npc
-
-        if v == 0 or max == 0 then
-            return FocusFrameManaBarText:SetText''
-        end
-
-        if _G['modui_vars'].db['modWhiteStatusText'] == 0 then
-            if class == 'ROGUE' or (class == 'DRUID' and pt == 3) then
-                FocusFrameManaBarText:SetTextColor(250/255, 240/255, 200/255)
-            elseif (npc == '1' and class == 'WARRIOR') or (class == 'DRUID' and pt == 1) then
-                FocusFrameManaBarText:SetTextColor(250/255, 108/255, 108/255)
-            else
-                FocusFrameManaBarText:SetTextColor(.6, .65, 1)
-            end
-        else
-            FocusFrameManaBarText:SetTextColor(1, 1, 1)
+    local function FocusFrame_CheckFaction()
+        if Focus:GetData'unitIsPlayer' then
+            unit = Focus:GetData'unit'
+            _, class = UnitClass(unit)
+            local colour = RAID_CLASS_COLORS[class]
+            FocusFrameNameBackground:SetVertexColor(colour.r, colour.g, colour.b, 1)
         end
     end
 
-    function FocusFrame_CheckClassification(unit)
-        orig.FocusFrame_CheckClassification(unit)
-        local c = UnitClassification(unit)
+    local function FocusFrame_CheckClassification()
+        local c = Focus:GetData'unitClassification'
         FocusFrameTexture:SetTexture[[Interface\TargetingFrame\UI-TargetingFrame]]
         for _, v in pairs({FocusFrame.Elite, FocusFrame.Rare}) do
             v:Hide()
@@ -177,18 +145,9 @@
         end
     end
 
-    function FocusFrame_CheckFaction(unit)
-        orig.FocusFrame_CheckFaction(unit)
-        if UnitIsPlayer(unit) then
-            _, class = UnitClass(unit)
-            local colour = RAID_CLASS_COLORS[class]
-            FocusFrameNameBackground:SetVertexColor(colour.r, colour.g, colour.b, 1)
-        end
-    end
-
-    function FocusFrame_HealthUpdate(unit)
-        orig.FocusFrame_HealthUpdate(unit)
-        local data = FocusFrame_GetFocusData(CURR_FOCUS_TARGET)
+    local function FocusFrame_HealthUpdate()
+        local hp, hmax  = Focus.GetHealth()
+        local pp, pmax  = Focus.GetPower()
 
         if GetCVar'modStatus' == '0' and GetCVar'modBoth' == '0' then
             for _, v in pairs({FocusDeadText, FocusFrameHealthBarText, FocusFrameManaBarText}) do
@@ -196,34 +155,50 @@
             end
         end
 
-        healthUpdate(unit, data)
-        powerUpdate(unit, data)
+        gradient(hp or 100, FocusFrameHealthBarText, 0, hmax or 100)
+        gradient(hp or 100, FocusFrameHealthBar, 0, hmax or 100)
+
+        if _G['modui_vars'].db['modWhiteStatusText'] == 0 then
+            local pp = Focus:GetData'unitPowerType'
+
+            if class == 'ROGUE' or (class == 'DRUID' and pt == 3) then
+                FocusFrameManaBarText:SetTextColor(250/255, 240/255, 200/255)
+            elseif (unit and UnitIsPlayer(unit) and class == 'WARRIOR') or (class == 'DRUID' and pt == 1) then
+                FocusFrameManaBarText:SetTextColor(250/255, 108/255, 108/255)
+            else
+                FocusFrameManaBarText:SetTextColor(.6, .65, 1)
+            end
+        else
+            FocusFrameManaBarText:SetTextColor(1, 1, 1)
+        end
     end
 
-    function FocusDebuffButton_Update(unit)
-        orig.FocusDebuffButton_Update(unit)
+    local function FocusDebuffButton_Update()
         local cv        = _G['modui_vars'].db['modAuraOrientation']
-        local data      = FocusFrame_GetFocusData(CURR_FOCUS_TARGET)
+        local buffData  = Focus.GetBuffs()
+        local debuffs   = buffData.debuffs
+        local debuff, dtype
         local numDebuff = 0
-        local texture, dtype
-        local colour
 
         for i = 1, 16 do
             if unit then
-                texture, _, dtype = UnitDebuff(unit, i)
+                debuff, _, dtype = UnitDebuff(unit, i)
             else
-                texture = FSPELLCASTINGCOREgetBuffs(CURR_FOCUS_TARGET)['debuffs'][i]
-                dtype = texture and texture.debuffType or nil
+                debuff = debuffs[i]
+                dtype = debuff and debuff.debuffType or nil
             end
-            if texture then
-                colour = DebuffTypeColor[dtype] or DebuffTypeColor['none']
+
+            if debuff then
+                local colour = DebuffTypeColor[dtype] or DebuffTypeColor['none']
+
                 modSkinColor(_G['FocusFrameDebuff'..i], colour.r*.7, colour.g*.7, colour.b*.7)
                 _G['FocusFrameDebuff'..i..'Border']:Hide()
+
                 numDebuff = numDebuff + 1
             end
         end
 
-        if (data and data.enemy == '1') or (unit and UnitIsFriend('player', unit)) then
+        if Focus:GetData'unitIsFriend' then
             if cv == 0 then
                 FocusFrameBuff1:SetPoint('TOPLEFT', FocusFrame, 'BOTTOMLEFT', 7, 32)
                 FocusFrameDebuff1:SetPoint('TOPLEFT', _G['FocusFrameBuff1'], 'BOTTOMLEFT', 0, -4)
@@ -247,5 +222,10 @@
             end
         end
     end
+
+    Focus:OnEvent('UNIT_FACTION', FocusFrame_CheckFaction)
+    Focus:OnEvent('UNIT_CLASSIFICATION_CHANGED', FocusFrame_CheckClassification)
+    Focus:OnEvent('UNIT_HEALTH_OR_POWER', FocusFrame_HealthUpdate)
+    Focus:OnEvent('UNIT_AURA', FocusDebuffButton_Update)
 
     --
