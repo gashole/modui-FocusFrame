@@ -147,7 +147,6 @@
 
     local function FocusFrame_HealthUpdate()
         local hp, hmax  = Focus.GetHealth()
-        local pp, pmax  = Focus.GetPower()
 
         if GetCVar'modStatus' == '0' and GetCVar'modBoth' == '0' then
             for _, v in pairs({FocusDeadText, FocusFrameHealthBarText, FocusFrameManaBarText}) do
@@ -155,11 +154,11 @@
             end
         end
 
-        gradient(hp or 100, FocusFrameHealthBarText, 0, hmax or 100)
-        gradient(hp or 100, FocusFrameHealthBar, 0, hmax or 100)
+        gradient(hp, FocusFrameHealthBarText, 0, hmax)
+        gradient(hp, FocusFrameHealthBar, 0, hmax)
 
         if _G['modui_vars'].db['modWhiteStatusText'] == 0 then
-            local pp = Focus:GetData'unitPowerType'
+            local pt = Focus:GetData'powerType'
 
             if class == 'ROGUE' or (class == 'DRUID' and pt == 3) then
                 FocusFrameManaBarText:SetTextColor(250/255, 240/255, 200/255)
