@@ -123,7 +123,7 @@
         end
     end
 
-    local function FocusFrame_CheckFaction()
+    local CheckFaction = function()
         if Focus:GetData'unitIsPlayer' then
             unit = Focus:GetData'unit'
             _, class = UnitClass(unit)
@@ -132,7 +132,7 @@
         end
     end
 
-    local function FocusFrame_CheckClassification()
+    local CheckClassification = function()
         local c = Focus:GetData'unitClassification'
         FocusFrameTexture:SetTexture[[Interface\TargetingFrame\UI-TargetingFrame]]
         for _, v in pairs({FocusFrame.Elite, FocusFrame.Rare}) do
@@ -145,7 +145,7 @@
         end
     end
 
-    local function FocusFrame_HealthUpdate()
+    local HealthUpdate = function()
         local hp, hmax  = Focus.GetHealth()
 
         if GetCVar'modStatus' == '0' and GetCVar'modBoth' == '0' then
@@ -172,7 +172,7 @@
         end
     end
 
-    local function FocusDebuffButton_Update()
+    local AuraUpdate = function()
         local cv        = _G['modui_vars'].db['modAuraOrientation']
         local buffData  = Focus.GetBuffs()
         local debuffs   = buffData.debuffs
@@ -222,9 +222,9 @@
         end
     end
 
-    Focus:OnEvent('UNIT_FACTION', FocusFrame_CheckFaction)
-    Focus:OnEvent('UNIT_CLASSIFICATION_CHANGED', FocusFrame_CheckClassification)
-    Focus:OnEvent('UNIT_HEALTH_OR_POWER', FocusFrame_HealthUpdate)
-    Focus:OnEvent('UNIT_AURA', FocusDebuffButton_Update)
+    Focus:OnEvent('UNIT_FACTION', CheckFaction)
+    Focus:OnEvent('UNIT_CLASSIFICATION_CHANGED', CheckClassification)
+    Focus:OnEvent('UNIT_HEALTH_OR_POWER', HealthUpdate)
+    Focus:OnEvent('UNIT_AURA', AuraUpdate)
 
     --
